@@ -17,7 +17,7 @@ ThresholdModel <- function(usr.raster, usr.occs, method, output.type){
   SuitabilityScores <- SuitabilityScores[complete.cases(SuitabilityScores)]
   
   if(method == "MPT"){
-    threshold <- min(SuitabilityScores)
+    threshold <- min(SuitabilityScores) - 0.0000001
   } else if(method == "95pct"){
     threshold <- sort(SuitabilityScores, decreasing = T)[round(length(SuitabilityScores)*.95,0)] 
   } else if(method == "90pct"){
@@ -28,8 +28,13 @@ ThresholdModel <- function(usr.raster, usr.occs, method, output.type){
     usr.raster[usr.raster < threshold] <- 0
     return(usr.raster)
   } else if(output.type == "binary"){
-  M <- c(0, threshold, 0,  threshold, 1, 1); 
-  rclmat <- matrix(M, ncol = 3, byrow = TRUE); 
-  Dist <- reclassify(usr.raster, rcl = rclmat);
+  #M <- c(0, threshold, 0,  threshold, 1, 1); 
+  #rclmat <- matrix(M, ncol = 3, byrow = TRUE); 
+  #Dist <- reclassify(x = usr.raster, rcl = rclmat);
+  bin.raster <- usr.raster
+  bin.raster[bin.raster < threshold] <- 0
+  bin.raster[bin.raster >= threshold] <- 1
+  return(bin.raster)
   }
 }
+

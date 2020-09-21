@@ -16,12 +16,15 @@
 ### Check installed package - install if still needed
 
 list.of.packages <- c("caret",
+"cowplot",
 "dismo",
 "doParallel",
 "ecospat",
 "ENMeval",
+"ENMTools",
 "foreach",
 "ggplot2",
+"ggpubr",
 "hypervolume",
 "parallel",
 "raster",
@@ -32,16 +35,25 @@ list.of.packages <- c("caret",
 #"rSDM",
 "RStoolbox",
 "scrubr",
+"sjmisc",
 "sp",
 "spocc",
-"spThin")
+"spThin",
+"stringr",
+"viridis")
+#
+
+#
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
+#
 
-### Load libraries
+# Load libraries
 lapply(list.of.packages, require, character.only = TRUE)
+#
 
-### Source scripts
+# Source scripts
 setwd("~/Dropbox/Niche_Things/Functions/")
-files.sources = list.files()
+files.sources <- list.files()
 sapply(files.sources, source)
+#
