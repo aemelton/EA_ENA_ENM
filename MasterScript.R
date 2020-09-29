@@ -28,29 +28,13 @@ setwd(Point.Data.folder)
 #
 
 #
-Species.List <- c("Mitchella repens", "Mitchella undulata") #read.csv(file = "SPECIESLISTFILE") # If you want to provide a file of species names, replace c("SPECIES NAMES") with read.csv("FILE")
-CSV.List <- gsub(pattern = ' ', replacement = '_', x = Species.List)
-CSV.List <- paste0(CSV.List, ".csv")
-#
-
-#
-#GetOccurrenceData(method = "scrubr", 
-#                  usr.query = "Genus species", 
-#                  usr.db = c("idigbio", "gbif"),# See spocc package for details and more options
-#                  #user.ref = bio1, 
-#                  usr.output = "Genus_species.csv")
-#
-
-# The for loop is just there if you want to run a list of species names. I have generally gone through one-by-one.
-for (i in 1:length(Species.List)) {
-print(species.name)
 GetOccurrenceData(method = "scrubr", 
-                          usr.query = species.name, 
-                          usr.db = c("idigbio", "gbif"), 
-                          #user.ref = RASTERFILE, 
-                          usr.output = CSV.List[i])
-}
+                  usr.query = "Genus species", 
+                  usr.db = c("idigbio", "gbif"),# See spocc package for details and more options
+                  #user.ref = bio1, 
+                  usr.output = "Genus_species.csv")
 #
+
 #############################################################################################
 ##### Data prep #####
 #############################################################################################
