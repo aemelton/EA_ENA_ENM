@@ -55,8 +55,6 @@ species.list
 #
 
 #
-#for (i in 1:length(species.list)) { # if you just want to do one at a time, replace species.name with an object like species.name <- "Genus species"
-species.name <- "Sp1"
 #############################################################################################
 ##### Data prep #####
 #############################################################################################
@@ -219,7 +217,6 @@ modeval <- ENMevaluate(occ = rare.pts[, c("longitude", "latitude")],
                        #categoricals = "Taxonomy", 
                        algorithm = 'maxent.jar',
                        #RMvalues = seq(0.5, 4, 0.5), # DEFAULT
-                       RMvalues = seq(1, 4, 1),
                        #fc = c("L", "LQ", "H", "LQH", "LQHP", "LQHPT"), # DEFAULT
                        method = eval.meth,
                        #overlap = TRUE, # DEFAULT
@@ -300,9 +297,6 @@ CBI <- GetCBIv2(modeval.usr.sp = modeval,
 #                mod.num = mod.num[6])
 #CBI <- rbind(CBI, CBI.b)#, CBI.c)#, CBI.d, CBI.e)#, CBI.f)
 #CBI
-
-#CE <- GetCE(modeval.usr.sp = modeval, usr.occs = occ.dat, usr.raster = red.envStack, usr.bg = bg.pts)
-#CE
 #
 
 #
@@ -404,133 +398,6 @@ species.list <- gsub(pattern = "./", replacement = '', x = folder.list)
 GetThresholdedPredictionRasters()
 #
 #############################################################################################
-# Load binary predictions, environmental rasters, and occurrence data to estimate hypervolumes
-#
-setwd(ENMEval.Outputs.folder)
-output.folder.list <- list.files(pattern = "*", full.names = TRUE) # Make a list of all species output folders
-output.folder.list
-
-#setwd("~/Dropbox/UF_Research/EA_ENA_ENM/GEB_Revisions/SDM/")
-#sdm.list <- list.files(pattern = ".tif", full.names = TRUE) # Make a list of all prediction rasters
-#sdm.list
-
-setwd(Species.Layers.folder)
-layers.folder.list <- list.files(pattern = "*", full.names = TRUE) # Make a list of all species output folders
-layers.folder.list
-species.list <- gsub(pattern = "./", replacement = '', x = layers.folder.list)
-species.list
-#
-
-#
-num.cores <- detectCores()
-cl <- makeCluster(num.cores)
-registerDoParallel(cl)
-#
-# Parallelized
-tmp.df <- data.frame(species = character(), HV = character()) # Generate empty data frame to put results in
-df <- data.frame(species = character(), HV = character()) # Generate empty data frame to put results in
-setwd(project.folder)
-df <- foreach(i = 1:length(species.list), .combine = rbind, .inorder = TRUE, .packages = list.of.packages) %dopar% {
-  # Load rasters and stack
-  setwd(file.path("Species_Layers/"))
-  setwd(file.path(layers.folder.list[i]))
-  env.files <- list.files(pattern = ".tif", full.names = TRUE)
-  envStack <- stack(env.files)
-  pca <- rasterPCA(img = envStack, spca = T) #
-  #pca.summary <- as.matrix(unclass(summary(pca$model)))
-  PC1 <- pca$map$PC1
-  PC2 <- pca$map$PC2
-  pcaStack <- stack(PC1, PC2)
-  #
-  
-  # Load binary raster
-  setwd(file.path(project.folder))
-  setwd(file.path("ENMEval_Outputs/"))
-  setwd(file.path(output.folder.list[i]))
-  file.name <- paste0(species.name, ".tif", sep = "")
-  bin.mod <- raster(file.name)
-  
-  pca.summary <- summary(pca$model)
-  unclass(pca.summary)
-  
-  
-  write.csv(x = as.matrix(unclass(pca.summary$loadings)), file = "PCA_summary.csv")
-  #
-  
-  #
-  HypVol <- GetHypervolume(bin.proj = bin.mod, usr.env = pcaStack, do.scale = F, do.center = F, set.scale = F)
-  tmp <- cbind(species.name, HypVol@Volume)
-  tmp.df <- rbind(tmp.df, tmp)
-  
-  # Go home to start the loop over
-  setwd(file.path(project.folder))
-  #
-}
-stopCluster(cl)
-df
-#
-
-# serial
-df <- data.frame(species = character(), HV = character()) # Generate empty data frame to put results in
-setwd(project.folder)
-for(i in 1:length(output.folder.list)){
-  #
-  #setwd("SDM/")
-  #file.name <- paste0(species.name, ".tif", sep = "")
-  #bin.mod <- raster(sdm.list[1])
-  #
-  
-  # Load rasters and stack
-  setwd("Species_Layers/")
-  setwd(layers.folder.list[i])
-  env.files <- list.files(pattern = ".tif", full.names = TRUE)
-  envStack <- stack(env.files)
-  pca <- rasterPCA(img = envStack, spca = T) #
-  #pca.summary <- as.matrix(unclass(summary(pca$model)))
-  PC1 <- pca$map$PC1
-  PC2 <- pca$map$PC2
-  pcaStack <- stack(PC1, PC2)
-  #
-  
-  # Load binary raster
-  setwd(project.folder)
-  setwd("ENMEval_Outputs/")
-  setwd(output.folder.list[i])
-  file.name <- paste0(species.name, ".tif", sep = "")
-  bin.mod <- raster(file.name)
-  
-  pca.summary <- summary(pca$model)
-  unclass(pca.summary)
-
-  
-  write.csv(x = as.matrix(unclass(pca.summary$loadings)), file = "PCA_summary.csv")
-    #
-  
-  #
-  HypVol <- GetHypervolume(bin.proj = bin.mod, usr.env = pcaStack, do.scale = F, do.center = F, set.scale = F)
-  tmp <- cbind(species.name, HypVol@Volume)
-  df <- rbind(df, tmp)
-  
-  # Go home to start the loop over
-  setwd(project.folder)
-  #
-}
-#
-df
-#
-
-#############################################################################################
-#
-HypVol <- GetHypervolume(bin.proj = bin.mod, usr.env = pcaStack, do.scale = F, do.center = F, set.scale = F)
-#
-
-#
-niche.widths <- BetaNicheWidth(usr.occs = occ.dat, usr.sdm = bin.mod, method = "sdm", usr.raster = envStack)
-#
-
-#
-PlotEcoGeoCurves(method = "distribution", usr.env = envStack, usr.raster = bin.mod, usr.variable = "bio15")
-#
 #############################################################################################
 
 # Remake spreadsheet with all the ENMEval stats and some modeling input data
@@ -810,27 +677,6 @@ species.list
 genera.list.all <- gsub(pattern = "_.*", replacement = '', x = species.list)
 genera.list <- unique(genera.list.all)                
 genera.list
-
-
-#
-
-#
-### TEST ### Not currently functional
-#genus.out <- as.list(rep(x = , length(genera.list)))
-#s.loop <- NULL
-#g.loop <- NULL
-#for(g in 1:length(genera.list)){
-#  for(s in 1:length(species.list)){
-#    if (str_contains(x = species.list[s], pattern = genera.list[15]) == TRUE) {
-#      s.loop <- c(s.loop, species.list[s])
-#    }
-#  }
-#  genus.out[15] <- s.loop
-#}
-#genus.out
-#g.loop
-#big.list
-### TEST ### 
 #
 
 #
