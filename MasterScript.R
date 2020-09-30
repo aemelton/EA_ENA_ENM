@@ -59,6 +59,10 @@ species.list
 ##### Data prep #####
 #############################################################################################
 #
+species.names <- ""
+#
+
+#
 print(species.name)
 species.folder <- species.name
 print("Loading unclipped rasters") 
