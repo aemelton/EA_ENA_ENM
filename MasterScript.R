@@ -67,13 +67,13 @@ print(species.name)
 species.folder <- species.name
 print("Loading unclipped rasters") 
 # Load environmental rasters
-setwd("PATH_TO_ENVIRONMENTAL_DATA_FOLDER")
-env.files <- list.files(pattern = ".tif", full.names = TRUE)
-envStack <- stack(env.files)
+#setwd("PATH_TO_ENVIRONMENTAL_DATA_FOLDER")
+#env.files <- list.files(pattern = ".tif", full.names = TRUE)
+#envStack <- stack(env.files)
 #names(envStack) <-  c("bio1", "bio10", "bio11", "bio12", "bio13", "bio14", "bio15", "bio16", "bio17", "bio18", "bio19",
 #                      "bio2", "bio3", "bio4", "bio5", "bio6", "bio7", "bio8", "bio9",
 #                      "CEC", "Clay", "Elevation", "OCD", "ORC", "PH", "Sand", "Silt", "Taxonomy")
-envStack <- setMinMax(envStack)
+#envStack <- setMinMax(envStack)
 #projection(envStack) <- "+proj=longlat +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +no_defs"
 #plot(envStack[[1]])
 #
@@ -83,7 +83,7 @@ setwd(Point.Data.folder)
 #
 
 #
-occ.dat <- read.csv(point.data.list[1])[,2:3]
+occ.dat <- read.csv(point.data.list[1])[,2:3] #change [#] as needed 
 #plot(envStack[[1]])
 #points(occ.dat, pch = 19)
 #nrow(occ.dat)
@@ -108,12 +108,12 @@ print("Clipping raster layers")
 #                                       output.folder = "OUTPUT FOLDER")
 
 RasterLayerProcessingByLoop(usr.occs = occ.dat, buffer.size = 0.25, path.to.rasters = "PATH_TO_ENVIRONMENTAL_DATA", output.format = "GTiff")
-plot(training.region[[1]])
-writeRaster(x = training.region, filename = species.name, bylayer = T, suffix=names(training.region), format = "GTiff", NAFlag = "NA", overwrite = T)
+#plot(training.region[[1]])
+#writeRaster(x = training.region, filename = species.name, bylayer = T, suffix=names(training.region), format = "GTiff", NAFlag = "NA", overwrite = T)
 #
 
 #
-graphics.off()
+#graphics.off()
 #
 
 #
