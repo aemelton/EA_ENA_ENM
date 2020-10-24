@@ -310,7 +310,6 @@ candidate.model.results <- cbind(results.trim, CBI)
 
 #
 print("Generating prediction rasters and outputs")
-# just going with 37 for oligocephala. take lowest mod number for equally good models (same evals and param #), many models equally good - mostly flat models; 33 for patens - 33, 39, 45 had least bad AUC and perfect or and dAIC; 13 for provinccialis
 g <- max(CBI$cbi.training.Spearman.cor, na.rm = T)
 g
 beep <- which(CBI$cbi.training.Spearman.cor == g)[1]
