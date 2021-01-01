@@ -9,7 +9,7 @@
 #
 source("~/Dropbox/Niche_Things/RequiredLibraries.R") # and sources function scripts
 sessionInfo()
-project.folder <- "SET_TO_FOLDER_PATH" # Set the main "umbrella" folder that all subfolders are in
+project.folder <- "~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/" # Set the main "umbrella" folder that all subfolders are in
 setwd(project.folder)
 #
 
@@ -59,7 +59,7 @@ species.list
 ##### Data prep #####
 #############################################################################################
 #
-species.names <- ""
+species.name <- ""
 #
 
 #
@@ -310,14 +310,14 @@ candidate.model.results <- cbind(results.trim, CBI)
 
 #
 print("Generating prediction rasters and outputs")
-g <- max(CBI$cbi.training.Spearman.cor, na.rm = T)
-g
-beep <- which(CBI$cbi.training.Spearman.cor == g)[1]
-max.CBI <- CBI$mod.num[beep]
-max.CBI
+#g <- max(CBI$cbi.training.Spearman.cor, na.rm = T)
+#g
+#beep <- which(CBI$cbi.training.Spearman.cor == g)[1]
+opt.AICc <- which(results$dAICc == 0)
+opt.AICc
 #results[23:24,]
-modeval@predictions[[max.CBI]]  # raw output; Check model name! 
-p <- predict(modeval@models[[max.CBI]], red.envStack) # Convert prediction to different output
+modeval@predictions[[opt.AICc]]  # raw output; Check model name! 
+p <- predict(modeval@models[[opt.AICc]], red.envStack) # Convert prediction to different output
 plot(p) # logistic output
 points(occ.dat, pch = 19, cex = 0.25)
 #
@@ -371,6 +371,77 @@ dev.off()
 graphics.off()
 #
 #}
+#############################################################################################
+#
+setwd(project.folder)
+#
+
+#
+setwd(project.folder)
+setwd("Point_Data/")
+occ.dat <- read.csv("SPECIES_NAME.csv")[,2:3]
+#
+
+#
+setwd(project.folder)
+setwd("Species_Layers/SPECIES_NAME/")
+env.files <- list.files(pattern = ".tif", full.names = TRUE)
+envStack <- stack(env.files)
+envStack <- setMinMax(envStack)
+#
+
+#
+print("Predictor variable reduction")
+#
+red.envStack <- ReduceEnvPred(usr.env = envStack, stat = "pearson", corr.cutoff = 0.8) # Uses the caret package to get identify and drop highly correlated layers
+KeptLayers <- names(red.envStack)
+rm(envStack)
+#plot(red.envStack[[1]])
+
+setwd(project.folder)
+setwd("ENMEval_Outputs/SPECIES_NAME/")
+load("SPECIES_NAME_ENMEval.RDA")
+results <- read.csv("SPECIES_NAME_ModelEvals_ENMEval.csv")
+#
+
+#
+print("Generating prediction rasters and outputs")
+#g <- max(CBI$cbi.training.Spearman.cor, na.rm = T)
+#g
+#beep <- which(CBI$cbi.training.Spearman.cor == g)[1]
+opt.AICc <- which(results$delta.AICc == 0)
+opt.AICc
+results[opt.AICc,]
+#opt.AICc <- 47
+modeval@predictions[[opt.AICc]]  # raw output; Check model name! 
+p <- predict(modeval@models[[opt.AICc]], red.envStack) # Convert prediction to different output
+plot(p) # logistic output
+points(occ.dat, pch = 19, cex = 0.25)
+#
+
+#
+candidate.model.results <- results[opt.AICc,]
+write.csv(x = candidate.model.results, file = "CandidateModelResults.csv")
+write.csv(x = KeptLayers, file = "KeptLayers.csv")
+#
+
+#
+pdf("SuitPlot.pdf")
+plot(p) # logistic output
+points(occ.dat, pch = 19, cex = 0.25)
+dev.off()
+#
+
+#
+var.imp <- var.importance(modeval@models[[opt.AICc]])
+write.csv(x = var.imp, file = "Variable_Importance.csv")
+lambdas <- parse_lambdas(modeval@models[[opt.AICc]])
+save(lambdas, file = "Lambdas.RDA")
+writeRaster(x = p, filename = "SPECIES_NAME", format = "GTiff", NAFlag = "-9999", overwrite = T)
+#
+
+#
+graphics.off()
 #############################################################################################
 ##### Post-Modeling #####
 #############################################################################################
@@ -470,7 +541,7 @@ write.csv(x = df, file = "../ENM_Data_and_Evaluations.csv", row.names = F)
 #
 
 #############
-csv <- read.csv("ENM_Data_and_Evaluations.csv")
+csv <- read.csv("ENM_Data_and_Evaluations_TRIM.csv")
 head(csv)
 EA <- csv[csv$Region == "EA",]
 ENA <- csv[csv$Region == "ENA",]
@@ -485,7 +556,7 @@ df <- data.frame(mean(csv$Rarefied.Points), sd(csv$Rarefied.Points), range(csv$R
            mean(csv$Delta.AICc), sd(csv$Delta.AICc), range(csv$Delta.AICc),
            mean(csv$CBI), sd(csv$CBI), range(csv$CBI))
 df
-write.csv(x = df, file = "Summary_Stats_for_Model_Evals.csv", row.names = F)
+write.csv(x = df, file = "Summary_Stats_for_Model_Evals_XX_REV.csv", row.names = F)
 
 low.or <- subset(x = csv$Average.Test.orMTP, csv$Average.Test.orMTP <= 0.05) # 58 >= 0.7
 length(low.or)
@@ -504,7 +575,7 @@ length(low.cbi)
 #
 
 #############
-csv <- read.csv("ENM_Data_and_Evaluations.csv")
+csv <- read.csv("ENM_Data_and_Evaluations_TRIM.csv")
 head(csv)
 csv <- csv[csv$Region == "EA",]
 #ENA <- csv[csv$Region == "ENA",]
@@ -519,11 +590,11 @@ df <- data.frame(mean(csv$Rarefied.Points), sd(csv$Rarefied.Points), range(csv$R
                  mean(csv$Delta.AICc), sd(csv$Delta.AICc), range(csv$Delta.AICc),
                  mean(csv$CBI), sd(csv$CBI), range(csv$CBI))
 df
-write.csv(x = df, file = "EA_Summary_Stats_for_Model_Evals.csv", row.names = F)
+write.csv(x = df, file = "EA_Summary_Stats_for_Model_Evals_XX_REV.csv", row.names = F)
 #
 
 #
-csv <- read.csv("ENM_Data_and_Evaluations.csv")
+csv <- read.csv("ENM_Data_and_Evaluations_TRIM.csv")
 head(csv)
 #EA <- csv[csv$Region == "EA",]
 csv <- csv[csv$Region == "ENA",]
@@ -538,11 +609,11 @@ df <- data.frame(mean(csv$Rarefied.Points), sd(csv$Rarefied.Points), range(csv$R
                  mean(csv$Delta.AICc), sd(csv$Delta.AICc), range(csv$Delta.AICc),
                  mean(csv$CBI), sd(csv$CBI), range(csv$CBI))
 df
-write.csv(x = df, file = "ENA_Summary_Stats_for_Model_Evals.csv", row.names = F)
+write.csv(x = df, file = "ENA_Summary_Stats_for_Model_Evals_XX_REV.csv", row.names = F)
 #
 
 #
-csv <- read.csv("ENM_Data_and_Evaluations.csv")
+csv <- read.csv("ENM_Data_and_Evaluations_TRIM.csv")
 head(csv)
 EA <- csv[csv$Region == "EA",]
 ENA <- csv[csv$Region == "ENA",]
@@ -620,52 +691,92 @@ setwd(project.folder)
 #
 
 #
-csv <- read.csv(file = "environmental_breadth.csv")
-data.frame(min(csv$Environmental.Breadth), max(csv$Environmental.Breadth), mean(csv$Environmental.Breadth), sd(csv$Environmental.Breadth))
+csv <- read.csv(file = "All_Breadth_Metrics_V2_TRIM.csv")
+csv$Genus <- gsub(pattern = " .*", replacement = "", x = csv$Species)
+csv$Niche_per_Geography <- csv$NicheArea/csv$GeographicArea
 EA <- csv[csv$Region == "EA",]
 ENA <- csv[csv$Region == "ENA",]
-
-env.breadth.comp <- wilcox.test(x = EA$Environmental.Breadth, y = ENA$Environmental.Breadth) # B2 is reference by DLW in a warren et al paper
-
-ea.df <- data.frame(mean(EA$Environmental.Breadth), sd(EA$Environmental.Breadth))
-ena.df <- data.frame(mean(ENA$Environmental.Breadth), sd(ENA$Environmental.Breadth))
 #
 
 #
-raster.breadth.results <- read.csv("~/Dropbox/UF_Research/EA_ENA_ENM/GEB_Revisions/raster_breadth.csv")
-data.frame(min(raster.breadth.results$B2), max(raster.breadth.results$B2), mean(raster.breadth.results$B2), sd(raster.breadth.results$B2))
+data.frame(min(csv$NicheArea), max(csv$NicheArea), mean(csv$NicheArea), sd(csv$NicheArea))
+niche.comp <- wilcox.test(x = EA$NicheArea, y = ENA$NicheArea) # B2 is reference by DLW in a warren et al paper
 
-EA <- raster.breadth.results[raster.breadth.results$Region == "EA",]
-ENA <- raster.breadth.results[raster.breadth.results$Region == "ENA",]
+ea.df <- data.frame(mean(EA$NicheArea), sd(EA$NicheArea))
+ena.df <- data.frame(mean(ENA$NicheArea), sd(ENA$NicheArea))
 
-#wilcox.test(x = EA$B1, y = ENA$B1) # Mann-Whitney test
-rast.breadth.comp <- wilcox.test(x = EA$B2, y = ENA$B2) # B2 is reference by DLW in a warren et al paper
+#wilcox.test(x = EA$NicheArea, y = ENA$NicheArea) # Mann-Whitney test
+niche.area.comp <- wilcox.test(x = EA$NicheArea, y = ENA$NicheArea) # B2 is reference by DLW in a warren et al paper
 
-ea.df <- data.frame(mean(EA$B2), sd(EA$B2))
-ena.df <- data.frame(mean(ENA$B2), sd(ENA$B2))
+ea.df <- data.frame(mean(EA$NicheArea), sd(EA$NicheArea))
+ena.df <- data.frame(mean(ENA$NicheArea), sd(ENA$NicheArea))
 #
 
 #
-df <- cbind(ea.env.mean, ena.env.mean, env.breadth.comp$statistic, env.breadth.comp$null.value, env.breadth.comp$p.value, ea.rast.mean, ena.rast.mean, rast.breadth.comp$statistic, rast.breadth.comp$null.value, rast.breadth.comp$p.value)
-df
-write.csv(x = df, file = "raster_and_env_b2_comp.csv")
+niche.area.df <- cbind(ea.df$mean.EA.NicheArea., ena.df$mean.ENA.NicheArea., niche.area.comp$statistic[[1]], niche.area.comp$null.value[[1]], niche.area.comp$p.value)
+colnames(niche.area.df) <- c("EA", "ENA", "W", "Null", "P-Value")
+write.csv(x = niche.area.df, file = "Niche_Area_Comp.csv")
 #
 
 #
-csv <- read.csv(file = "Niche_Area_and_95pct_G_Breadth_N_nucifera_CORRECTED.csv")
-data.frame(min(csv$Geographic.Breadth..95..Threshold.), max(csv$Geographic.Breadth..95..Threshold.), mean(csv$Geographic.Breadth..95..Threshold.), sd(csv$Geographic.Breadth..95..Threshold.))
-EA <- csv[csv$Region == "EA",]
-ENA <- csv[csv$Region == "ENA",]
+#csv <- read.csv(file = "Niche_Area_and_95pct_G_Breadth_N_nucifera_CORRECTED.csv")
+#data.frame(min(csv$GeographicArea), max(csv$GeographicArea), mean(csv$GeographicArea), sd(csv$GeographicArea))
+#EA <- csv[csv$Region == "EA",]
+#ENA <- csv[csv$Region == "ENA",]
 
-rast.breadth.comp <- wilcox.test(x = EA$Geographic.Breadth..95..Threshold., y = ENA$Geographic.Breadth..95..Threshold.) # B2 is reference by DLW in a warren et al paper
+Geo.comp <- wilcox.test(x = EA$GeographicArea, y = ENA$GeographicArea) # B2 is reference by DLW in a warren et al paper
 
-ea.df <- data.frame(mean(EA$Geographic.Breadth..95..Threshold.), sd(EA$Geographic.Breadth..95..Threshold.))
-ena.df <- data.frame(mean(ENA$Geographic.Breadth..95..Threshold.), sd(ENA$Geographic.Breadth..95..Threshold.))
+ea.df <- data.frame(mean(EA$GeographicArea), sd(EA$GeographicArea))
+ena.df <- data.frame(mean(ENA$GeographicArea), sd(ENA$GeographicArea))
 
-df <- cbind(rast.breadth.comp$statistic[[1]], rast.breadth.comp$p.value, ea.df$mean.EA.Geographic.Breadth..95..Threshold.., ea.df$sd.EA.Geographic.Breadth..95..Threshold.., ena.df$mean.ENA.Geographic.Breadth..95..Threshold.., ena.df$sd.ENA.Geographic.Breadth..95..Threshold..)
-df
-colnames(df) <- c("W statistic", "P-value", "EA mean", "EA SD", "ENA mean", "ENA SD")
-write.csv(x = df, file = "95pct_raster_b2_comp_V2.csv")
+geo.df <- cbind(ea.df$mean.EA.GeographicArea., ena.df$mean.ENA.GeographicArea., Geo.comp$statistic[[1]], Geo.comp$null.value[[1]], Geo.comp$p.value)
+geo.df
+colnames(geo.df) <- c("EA", "ENA", "W", "Null", "P-Value")
+write.csv(x = geo.df, file = "Geographic_Sampling_Comp.csv")
+
+#
+#setwd(project.folder)
+#csv <- read.csv(file = "All_Breadth_Metrics_V2_TRIM.csv")
+#head(csv)
+#csv$Genus <- gsub(pattern = " .*", replacement = "", x = csv$Species)
+#csv$Niche_per_Geography <- csv$NicheArea/csv$GeographicArea
+#
+
+# 
+NPG.comp <- wilcox.test(x = EA$Niche_per_Geography, y = ENA$Niche_per_Geography)
+ea.df <- data.frame(mean(EA$Niche_per_Geography), sd(EA$Niche_per_Geography))
+ena.df <- data.frame(mean(ENA$Niche_per_Geography), sd(ENA$Niche_per_Geography))
+
+NPG.df <- cbind(ea.df$mean.EA.Niche_per_Geography., ena.df$mean.ENA.Niche_per_Geography., NPG.comp$statistic[[1]], NPG.comp$null.value[[1]], NPG.comp$p.value)
+NPG.df
+colnames(NPG.df) <- c("EA", "ENA", "W", "Null", "P-Value")
+write.csv(x = NPG.df, file = "Niche_Area_Per_Geographic_Sampling_Comp.csv")
+#
+
+#
+EA.df <- EA %>%
+  group_by(Genus) %>%
+  summarise(meanNicheArea = mean(NicheArea), sdNicheArea = sd(NicheArea),
+            meanG = mean(GeographicArea), sdG = sd(GeographicArea),
+            meanNPG = mean(Niche_per_Geography), sdNPG = sd(Niche_per_Geography))
+EA.df
+write.csv(x = EA.df, file = "EA_Metrics_Per_GENUS_V3_XX_REV.csv")
+
+ENA.df <- ENA %>%
+  group_by(Genus) %>%
+  summarise(meanNicheArea = mean(NicheArea), sdNicheArea = sd(NicheArea),
+            meanG = mean(GeographicArea), sdG = sd(GeographicArea),
+            meanNPG = mean(Niche_per_Geography), sdNPG = sd(Niche_per_Geography))
+ENA.df
+write.csv(x = ENA.df, file = "ENA_Metrics_Per_GENUS_V3_XX_REV.csv")
+
+all.df <- csv %>%
+  #group_by(Genus) %>%
+  summarise(minNicheArea = min(NicheArea), maxNicheArea = max(NicheArea), meanNicheArea = mean(NicheArea), sdNicheArea = sd(NicheArea),
+            minGeographicArea = min(GeographicArea), maxGeographicArea = max(GeographicArea), meanGeographicArea = mean(GeographicArea), sdGeographicArea = sd(GeographicArea),
+            minNPG = min(Niche_per_Geography), maxNPG = max(Niche_per_Geography), meanNPG = mean(Niche_per_Geography), sdNPG = sd(Niche_per_Geography))
+all.df
+write.csv(x = all.df, file = "All_Metrics_Summary_V3_XX_REV.csv") #"All_Metrics_Per_GENUS_V3_XX_REV.csv"
 
 #
 #############################################################################################
@@ -730,33 +841,34 @@ df
 write.csv(x = df, file = "All_BG_Tests_Out.csv", row.names = FALSE)
 #
 #############################################################################################
-csv <- read.csv(file = "Niche_Area_and_95pct_G_Breadth_N_nucifera_CORRECTED.csv")
+setwd(project.folder)
+csv <- read.csv(file = "All_Breadth_Metrics_V2_TRIM.csv")
 head(csv)
 EA <- csv[csv$Region == "EA",]
 ENA <- csv[csv$Region == "ENA",]
 
 #wilcox.test(x = EA$B1, y = ENA$B1) # Mann-Whitney test
-niche.area.comp <- wilcox.test(x = EA$Geographic.Breadth..95..Threshold., y = ENA$Geographic.Breadth..95..Threshold.) 
+niche.area.comp <- wilcox.test(x = EA$GeographicArea, y = ENA$GeographicArea) 
 
-data.frame(min(csv$Geographic.Breadth..95..Threshold.), max(csv$Geographic.Breadth..95..Threshold.), mean(csv$Geographic.Breadth..95..Threshold.), sd(csv$Geographic.Breadth..95..Threshold.))
-ea.df <- data.frame(mean(EA$Geographic.Breadth..95..Threshold.), sd(EA$Geographic.Breadth..95..Threshold.))
-ena.df <- data.frame(mean(ENA$Geographic.Breadth..95..Threshold.), sd(ENA$Geographic.Breadth..95..Threshold.))
+data.frame(min(csv$GeographicArea), max(csv$GeographicArea), mean(csv$GeographicArea), sd(csv$GeographicArea))
+ea.df <- data.frame(mean(EA$GeographicArea), sd(EA$GeographicArea))
+ena.df <- data.frame(mean(ENA$GeographicArea), sd(ENA$GeographicArea))
 #
 
 #
 df <- cbind(niche.area.comp$statistic,
             niche.area.comp$null.value,
             niche.area.comp$p.value,
-            ea.df$mean.EA.Geographic.Breadth..95..Threshold..,
-            ea.df$sd.EA.Geographic.Breadth..95..Threshold..,
-            ena.df$mean.ENA.Geographic.Breadth..95..Threshold..,
-            ena.df$sd.ENA.Geographic.Breadth..95..Threshold..) 
+            ea.df$mean.EA.GeographicArea.,
+            ea.df$sd.EA.GeographicArea.,
+            ena.df$mean.ENA.GeographicArea.,
+            ena.df$sd.ENA.GeographicArea.) 
 df
-write.csv(x = df, file = "g_space_comp_N_nucifera_corrected.csv", row.names = FALSE)
+write.csv(x = df, file = "FILE.csv", row.names = FALSE)
 #############################################################################################
 
 #############################################################################################
-csv <- read.csv(file = "All_BG_Tests_Out_w_Regions_R2.csv")
+csv <- read.csv(file = "All_BG_Tests_Out_w_Regions_R2_TRIM.csv")
 head(csv)
 EA.EA <- csv[csv$Comparison == "EA-EA",]
 EA.ENA <- csv[csv$Comparison == "EA-ENA",]
@@ -764,8 +876,13 @@ ENA.ENA <- csv[csv$Comparison == "ENA-ENA",]
 nrow(csv)
 nrow(EA.EA) + nrow(EA.ENA) + nrow(ENA.ENA) # Just making sure everyhing made it in....
 
-kruskal.test(Obs.D ~ Comparison, data = csv)
+D.Comp <- kruskal.test(Obs.D ~ Comparison, data = csv)
+D.comp.df <- cbind(D.Comp$statistic, D.Comp$parameter, D.Comp$p.value)
+colnames(D.comp.df) <- c("Statistic", "Parameter", "P-value")
+write.csv(x = D.comp.df, file = "Background_Test_Comp_XX_REV.csv", row.names = FALSE)
+#
 
+#
 ea.ea.D.mean <- mean(EA.EA$Obs.D)
 ea.ea.D.var <- var(EA.EA$Obs.D)
 ea.ea.D.sd <- sd(EA.EA$Obs.D)
@@ -782,11 +899,15 @@ df <- data.frame(ea.ea.D.mean, ea.ea.D.var, ea.ea.D.sd,
                  ea.ena.D.mean, ea.ena.D.var, ea.ena.D.sd,
                  ena.ena.D.mean, ena.ena.D.var, ena.ena.D.sd)
 df
-write.csv(x = df, file = "BackGround_Test_Comparison_Summary_Stats.csv", row.names = F)
+write.csv(x = df, file = "BackGround_Test_Comparison_Summary_Stats_XX_REV.csv", row.names = F)
 #
 
 #
 sig <- subset(csv, p.D <= 0.05)
+
+nrow(csv[csv$Comparison == "EA-EA",])
+nrow(csv[csv$Comparison == "EA-ENA",])
+nrow(csv[csv$Comparison == "ENA-ENA",])
 
 EA.EA <- sig[sig$Comparison == "EA-EA",]
 EA.ENA <- sig[sig$Comparison == "EA-ENA",]
@@ -798,7 +919,7 @@ nrow(ENA.ENA)
 #
 
 #
-pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/GEB_REVISION/Figures/Background_Test_Results.pdf") #width = 8.5, height = 8.5, units = 'in', res = 300)
+pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/XX_REVISION/Figures/Background_Test_Results_XX_REV.pdf") #width = 8.5, height = 8.5, units = 'in', res = 300)
 ggplot(csv, aes(x = Comparison, y = Obs.D, fill = Comparison)) +
   geom_violin() +
   ylab("Schoener's D") +
@@ -815,27 +936,14 @@ dev.off()
 #
 #############################################################################################
 setwd(project.folder)
-csv <- read.csv(file = "All_Breadth_Metrics_V2.csv")
+csv <- read.csv(file = "All_Breadth_Metrics_V2_TRIM.csv")
 head(csv)
 
-g.plot <- ggplot(csv, aes(x = Region, y = RasterBreadth, fill = Region)) +
-  geom_violin() +
-  ylab("Levins' Niche Breadth") +
-  ylim(0, 1) +
-  xlab("Use of available G-space") +
-  #scale_fill_grey(start=0.75, end=0.5) + 
-  theme_classic() +
-  theme(text = element_text(size=12)) +
-  theme(legend.position="none") +
-  geom_point(shape = 21, size = 2, position = position_jitterdodge(), color = "black", alpha = 1) +
-  theme_pubr() +
-  stat_summary(fun = "mean", geom = "point", shape = 19, size = 2, color = "black")
-
-e.plot <- ggplot(csv, aes(x = Region, y = GeographicArea, fill = Region)) +
+g.plot <- ggplot(csv, aes(x = Region, y = GeographicArea, fill = Region)) +
   geom_violin() +
   ylab("Geographic Area (km^2)") +
   #ylim(0, 1) +
-  xlab("Available G-space") +
+  xlab("Sampled G-space") +
   #scale_fill_grey(start=0.75, end=0.5) + 
   theme_classic() +
   theme(text = element_text(size=12)) +
@@ -844,7 +952,7 @@ e.plot <- ggplot(csv, aes(x = Region, y = GeographicArea, fill = Region)) +
   theme_pubr() +
   stat_summary(fun = "mean", geom = "point", shape = 19, size = 2, color = "black")
 
-n.plot <- ggplot(csv, aes(x = Region, y = NicheArea, fill = Region)) +
+e.plot <- ggplot(csv, aes(x = Region, y = NicheArea, fill = Region)) +
   geom_violin() +
   ylab("Niche Area") +
   ylim(0, 30) +
@@ -857,8 +965,21 @@ n.plot <- ggplot(csv, aes(x = Region, y = NicheArea, fill = Region)) +
   theme_pubr() +
   stat_summary(fun = "mean", geom = "point", shape = 19, size = 2, color = "black")
 
-big.grid <- plot_grid(e.plot, g.plot, n.plot, ncol = 3, labels = "AUTO")
-pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/GEB_REVISION/Figures/G_and_E_Breadth_V4.pdf",
+npg.plot <- ggplot(csv, aes(x = Region, y = RasterBreadth, fill = Region)) +
+  geom_violin() +
+  ylab("Niche Area per Sampled Geographic Area") +
+  ylim(0, 1) +
+  xlab("Niche Area per Sampled Geographic Area") +
+  #scale_fill_grey(start=0.75, end=0.5) + 
+  theme_classic() +
+  theme(text = element_text(size=12)) +
+  theme(legend.position="none") +
+  geom_point(shape = 21, size = 2, position = position_jitterdodge(), color = "black", alpha = 1) +
+  theme_pubr() +
+  stat_summary(fun = "mean", geom = "point", shape = 19, size = 2, color = "black")
+
+big.grid <- plot_grid(g.plot, e.plot, ncol = 2, labels = "AUTO")
+pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/XX_REVISION/Figures/Breadth_Metrics_XX_REV.pdf",
     width = 8.5, height = 8.5)#, units = 'in', res = 300)
 ggdraw(big.grid)
 dev.off()
@@ -929,84 +1050,12 @@ species.list <- c("Apios_priceana",
 #
 
 #############################################################################################
-setwd(project.folder)
-csv <- read.csv(file = "Niche_Area_and_95pct_G_Breadth_N_nucifera_CORRECTED.csv")
-head(csv)
-csv$Genus <- gsub(pattern = " .*", replacement = "", x = csv$Species)
 
-EA <- csv[csv$Region == "EA",]
-ENA <- csv[csv$Region == "ENA",]
-
-EA.df <- EA %>%
-  group_by(Genus) %>%
-  summarise(meanNicheArea = mean(Niche.Breadth..Area.), sdNicheArea = sd(Niche.Breadth..Area.),
-            meanG = mean(Geographic.Breadth..95..Threshold.), sdG = sd(Geographic.Breadth..95..Threshold.))
-EA.df
-write.csv(x = EA.df, file = "EA_Metrics_Per_GENUS_V2.csv")
-
-ENA.df <- ENA %>%
-  group_by(Genus) %>%
-  summarise(meanNicheArea = mean(Niche.Breadth..Area.), sdNicheArea = sd(Niche.Breadth..Area.),
-            meanG = mean(Geographic.Breadth..95..Threshold.), sdG = sd(Geographic.Breadth..95..Threshold.))
-ENA.df
-write.csv(x = ENA.df, file = "ENA_Metrics_Per_GENUS_V2.csv")
-
-#
 #############################################################################################
-#
-setwd(project.folder)
-csv <- read.csv(file = "Niche_Area_and_95pct_G_Breadth_N_nucifera_CORRECTED.csv")
-csv$Genus <- gsub(pattern = " .*", replacement = "", x = csv$Species)
-head(csv)
-
-csv$GeographicSize <- df$`Geographic Area`
-EA <- csv[csv$Region == "EA",]
-ENA <- csv[csv$Region == "ENA",]
-wilcox.test(x = EA$GeographicSize, y = ENA$GeographicSize)
-data.frame(min(csv$GeographicSize), max(csv$GeographicSize), mean(csv$GeographicSize), sd(csv$GeographicSize))
-data.frame(mean(EA$GeographicSize), sd(EA$GeographicSize))
-data.frame(mean(ENA$GeographicSize), sd(ENA$GeographicSize))
-#
-
-#
-df
-write.csv(x = df, file = "g_space_comp_N_nucifera_corrected.csv", row.names = FALSE)
-
-df$Niche_Area <- csv$Niche.Breadth..Area.
-shapiro.test(x = df$`Geographic Area`)
-shapiro.test(x = df$Niche_Area)
-cor(x = df$`Geographic Area`, y = df$Niche_Area, method = "kendall")
-
-df.b <- df[-55,]
-library("ggpubr")
-ggscatter(df.b, x = "Geographic Area", y = "Niche_Area", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "kendall",
-          xlab = "Geographic Area", ylab = "Niche Area")
-#
-
-#
-EA.df <- EA %>%
-  group_by(Genus) %>%
-  summarise(meanNicheArea = mean(Niche.Breadth..Area.), sdNicheArea = sd(Niche.Breadth..Area.),
-            meanGArea = mean(GeographicSize), sdGArea = sd(GeographicSize),
-            meanG = mean(Geographic.Breadth..95..Threshold.), sdG = sd(Geographic.Breadth..95..Threshold.))
-EA.df
-write.csv(x = EA.df, file = "EA_Metrics_Per_GENUS_V3.csv")
-
-ENA.df <- ENA %>%
-  group_by(Genus) %>%
-  summarise(meanNicheArea = mean(Niche.Breadth..Area.), sdNicheArea = sd(Niche.Breadth..Area.),
-            meanGArea = mean(GeographicSize), sdGArea = sd(GeographicSize),
-            meanG = mean(Geographic.Breadth..95..Threshold.), sdG = sd(Geographic.Breadth..95..Threshold.))
-ENA.df
-write.csv(x = ENA.df, file = "ENA_Metrics_Per_GENUS_V3.csv")
-#
-#############################################################################################
-# Let's make some plots for all of the evaluaiton metrics
+# Let's make some plots for all of the evaluation metrics
 
 setwd(project.folder)
-csv <- read.csv(file = "ENM_Data_and_Evaluations.csv")
+csv <- read.csv(file = "ENM_Data_and_Evaluations_TRIM.csv")
 head(csv)
 
 trainingAUC.plot <- ggplot(csv, aes(x = Region, y = Training.AUC, fill = Region)) +
@@ -1062,10 +1111,50 @@ CBI.plot <- ggplot(csv, aes(x = Region, y = CBI, fill = Region)) +
   stat_summary(fun = "mean", geom = "point", shape = 19, size = 2, color = "black")
 
 big.grid <- plot_grid(trainingAUC.plot, testAUC.plot, ORmtp.plot, CBI.plot, ncol = 2, labels = "AUTO")
-pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/GEB_REVISION/Figures/Evaluation_Metrics.pdf",
+pdf("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/XX_REVISION/Figures/Evaluation_Metrics_XX_REV.pdf",
     width = 8.5, height = 8.5)#, units = 'in', res = 300)
 ggdraw(big.grid)
 dev.off()
+#############################################################################################
+setwd("~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/SDM_95pct/")
+
+file.list <- list.files()
+for(i in 1:length(file.list)){
+  tmp.raster <- raster(file.list[i])
+  tmp.raster[tmp.raster == 0] <- 1 
+  setwd("~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/Species_Full_Raster/")
+  writeRaster(x = tmp.raster, filename = file.list[i])
+  setwd("~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/SDM_95pct/")
+}
+
+#######
+
+setwd("~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/Species_Full_Raster/")
+raster_list <- list.files()
+for(i in 1:length(raster_list)){
+  
+  # get file name
+  file_name <- raster_list[i]
+  
+  # read raster in
+  road_rast_i <- raster(file_name)
+  
+  if(i == 1){
+    
+    combined_raster <- road_rast_i
+    
+  } else {
+    
+    # merge rasters and calc overlap
+    combined_raster <- mosaic(combined_raster, road_rast_i, fun = sum)
+  }
+}
+
+plot(combined_raster)
+
+writeRaster(x = combined_raster, filename = "big_raster.tiff", format = "GTiff")
+#writeRaster(x = boop, filename = "big_raster.asc", format = "ascii")
+
 #############################################################################################
 
 .rs.restartR()
