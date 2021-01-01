@@ -2,6 +2,16 @@
 # Make a nicer plot of niche model predictions
 
 #
+output.folder <- "~/Dropbox/UF_Research/EA_ENA_ENM/XX_Revisions/ENMEval_Outputs/" # Set the main "umbrella" folder that all subfolders are in
+species.list <- c("Apios_fortunei",
+                  "Apios_priceana",
+                  "Cornus_controversa",
+                  "Cornus_alternifolia",
+                  "Tipularia_japonica",
+                  "Tipularia_discolor")
+
+#
+
 #
 for(i in 1:length(species.list)){
 species.folder <- paste0(output.folder, species.list[i])
@@ -206,6 +216,6 @@ plot.f <- ggplot() +
 
 
 big.grid <- plot_grid(plot.a, plot.b, plot.c, plot.d, plot.e, plot.f, ncol = 2)
-png("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/GEB_REVISION/Figures/ENM_plots_grid.png", width = 8.5, height = 8.5, units = 'in', res = 300)
+png("~/Dropbox/Manuscripts/UFL/EA_ENA_ENM/XX_REVISION/Figures/ENM_plots_grid_XX_REV.png", width = 8.5, height = 8.5, units = 'in', res = 300)
 ggdraw(big.grid)
 dev.off()
