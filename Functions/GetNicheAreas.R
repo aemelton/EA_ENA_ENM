@@ -6,12 +6,18 @@ GetNicheAreas <- function(env, big.bg.pts, R = 1000, th.sp = 0, th.env = 0){
 setwd(main.folder)
 
 print("Prepping total background data.")
-bg.env <- extract(env, big.bg.pts);
-bg.env <- bg.env[complete.cases(bg.env),];
-write.csv(x = bg.env, file = "bg_env.csv", col.names = F)
-#bg.env <- read.csv(file = "bg_env.csv")
-  
-Niche.Plot.Outputs.folder <- paste0(main.folder, "Niche_Area_Plots/")
+
+if(file.exists("bg_env.csv")) {
+	bg.env <- read.csv(file = "bg_env.csv")
+}else{
+	bg.env <- extract(env, big.bg.pts);
+	bg.env <- bg.env[complete.cases(bg.env),];
+	write.csv(x = bg.env, file = "bg_env.csv", row.names = F)
+}
+#
+
+#  
+Niche.Plot.Outputs.folder <- paste0(main.folder, "Niche_Area/")
 ENMEval.Outputs.folder <- paste0(main.folder, "ENMEval_Outputs/")
 setwd(ENMEval.Outputs.folder)
 folder.list <- list.files(pattern = "*", full.names = TRUE) # Make a list of all species output folders
@@ -22,11 +28,18 @@ df <- data.frame(niche_area = character(), PC1_position = character(), PC2_posit
 tmp <- data.frame(niche_area = character(), PC1_position = character(), PC2_position = character()) # Generate empty data frame to put results in
 
 for (i in 1:length(folder.list)) {  #length(folder.list)
+  setwd(ENMEval.Outputs.folder)
   setwd(folder.list[i])
   species.name <- gsub(x = folder.list[i], pattern = "./", replacement = "")
   print(species.name)
+  
+  setwd(Niche.Plot.Outputs.folder)
+  if(file.exists(paste0(species.name, "_Niche.RDA"))){next} else {
+
+  setwd(ENMEval.Outputs.folder)
+  setwd(folder.list[i])
   print("Reading bg points and sampling occurrences.")
-  bg.pts <- read.csv("bg_pts.csv")[,2:3]
+  bg.pts <- read.csv("bg_pts.csv")#[,2:3]
   
   species.raster.file <- paste0(species.name, "_BIN.tif")
   sp <- raster(species.raster.file)
@@ -39,7 +52,7 @@ for (i in 1:length(folder.list)) {  #length(folder.list)
   sp.env <- extract(env, sp.pred.occ[,1:2]);
   sp.env <- sp.env[complete.cases(sp.env),];
   sp.bg.env <- extract(env, bg.pts[,1:2]);
-  sp.bg.env <- bg.env[complete.cases(bg.env),];
+  sp.bg.env <- sp.bg.env[complete.cases(sp.bg.env),];
   #
   
   #
@@ -77,6 +90,8 @@ for (i in 1:length(folder.list)) {  #length(folder.list)
   #tmp <- cbind(species, niche_area)
   df <- rbind(df, tmp)
   setwd(Niche.Plot.Outputs.folder)
+  niche.file.name <- paste0(species.name, "_Niche.RDA")
+  save(z, file =  niche.file.name)
   csv.file.name <- paste0(species.name, "_Niche_Area.csv")
   write.csv(x = tmp, file = csv.file.name)
   pdf.file.name <- paste0(species.name, "_Niche_Area.pdf")
@@ -86,6 +101,7 @@ for (i in 1:length(folder.list)) {  #length(folder.list)
   
   # Go home to start the loop over
   setwd(ENMEval.Outputs.folder)
+  }
   }
 return(df)
 }
