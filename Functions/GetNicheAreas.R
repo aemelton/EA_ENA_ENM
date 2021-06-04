@@ -51,13 +51,13 @@ for (i in 1:length(folder.list)) {  #length(folder.list)
   print("Extracting environmental data.")
   sp.env <- extract(env, sp.pred.occ[,1:2]);
   sp.env <- sp.env[complete.cases(sp.env),];
-  sp.bg.env <- extract(env, bg.pts[,1:2]);
-  sp.bg.env <- sp.bg.env[complete.cases(sp.bg.env),];
+  #sp.bg.env <- extract(env, bg.pts[,1:2]);
+  #sp.bg.env <- sp.bg.env[complete.cases(sp.bg.env),];
   #
   
   #
   print("Running ecospat.grid.clim.dyn")
-  z <- ecospat.grid.clim.dyn(glob = bg.env, glob1 = sp.bg.env, sp = sp.env, R = R, th.sp = th.sp, th.env = th.env)
+  z <- ecospat.grid.clim.dyn(glob = bg.env, glob1 = bg.env, sp = sp.env, R = R, th.sp = th.sp, th.env = th.env) # I will be adding in options to make the plot either show the full background niche space or a species specific niche space. This function does full niche space.
   species <- species.name
   
   ###
