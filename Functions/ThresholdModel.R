@@ -17,7 +17,7 @@ ThresholdModel <- function(usr.raster, usr.occs, method, output.type){
   SuitabilityScores <- SuitabilityScores[complete.cases(SuitabilityScores)]
   
   if(method == "MPT"){
-    threshold <- min(SuitabilityScores) - 0.0000001
+    threshold <- min(SuitabilityScores)
   } else if(method == "95pct"){
     threshold <- sort(SuitabilityScores, decreasing = T)[round(length(SuitabilityScores)*.95,0)] 
   } else if(method == "90pct"){
