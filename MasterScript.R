@@ -445,17 +445,6 @@ graphics.off()
 #############################################################################################
 ##### Post-Modeling #####
 #############################################################################################
-
-# Raster breadth section. Loops over all of the predictions rasters to calculate breadth using ENMTools
-#
-setwd("PATH_TO_PREDICTION_RASTERS")
-#
-
-#
-df <- GetRasterBreadths()
-setwd(project.folder)
-write.csv(x = df, file = "raster_breadth.csv", row.names = F)
-#
 #############################################################################################
 # Turn all the ENM prediction rasters into binary estimated distributions
 # Assumes nested series of folders and file names
@@ -650,17 +639,6 @@ big.bg.pts.trim <- gridSample(xy = big.bg.pts, r = env[[1]], n = 1)
 write.csv(x = big.bg.pts.trim, file = "all_bg_points_ONE_PER_CELL.csv")
 #
 #############################################################################################
-# Get environmental breadths using env.breadth from ENMTools
-df <- GetLevinsEnvBreadth(ENMEval.Outputs.folder = ENMEval.Outputs.folder, Species.Layers.folder = Species.Layers.folder, max.reps = 1000, tolerance = 1e-05)
-df
-# Not sure why need unlist... will investigate...
-df$Species <- unlist(df$Species)
-df$env.B2 <- unlist(df$env.B2)
-colnames(df) <- c("Species", "Environmental Breadth")
-df
-write.csv(x = df, file = "~/Dropbox/UF_Research/EA_ENA_ENM/GEB_Revisions/environmental_breadth.csv", row.names = F)
-#
-
 #############################################################################################
 setwd("PCA_Layers_nSamp_1mil/")
 env.files <- list.files(pattern = ".tif", full.names = TRUE)
